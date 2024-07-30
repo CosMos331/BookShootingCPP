@@ -13,6 +13,11 @@ class BOOKCPP_API ABullet : public AActor
 private: 
 	UPROPERTY(EditAnywhere, Category = "move")
 	float BulletSpeed;
+
+	// »ç¿ëÇÒ  Material
+	UPROPERTY(VisibleDefaultsOnly)
+	UMaterial* Material;
+
 public:	
 	// Sets default values for this actor's properties
 	ABullet();
@@ -35,5 +40,7 @@ public :
 private :
 
 	void BulletMove(float dt);
+
+	void BulletRemove();
 
 };

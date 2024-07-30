@@ -4,6 +4,8 @@
 #include "Actor/Bullet.h"
 #include "Components/BoxComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Materials/Material.h"
+
 
 // Sets default values
 ABullet::ABullet()
@@ -35,6 +37,18 @@ ABullet::ABullet()
 
 	// 기본적인 요소 초기화
 	BulletSpeed = 800.f;
+	
+	// 총알 액터의 Material 생성 및 적용
+	// 1)
+
+	static ConstructorHelpers::FObjectFinder<UMaterial> MT_BULLET(
+		TEXT("/Script/Engine.Material'/Game/Material/MT_Bullet.MT_Bullet'"));
+	if (MT_BULLET.Succeeded())
+	{
+		Material = MT_BULLET.Object;
+	}
+	meshComp->SetMaterial(0, Material);
+
 
 }
 
@@ -51,6 +65,8 @@ void ABullet::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	BulletMove(DeltaTime);
+
+	BulletRemove();
 }
 
 void ABullet::BulletMove(float dt)
@@ -61,5 +77,15 @@ void ABullet::BulletMove(float dt)
 
 	SetActorLocation(currentLocation);
 
+}
+
+void ABullet::BulletRemove()
+{
+	FVector currentLocation = GetActorLocation();
+
+	if (currentLocation.Z >= 650)
+	{
+		Destroy();
+	}
 }
 
