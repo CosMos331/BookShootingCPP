@@ -48,9 +48,6 @@ void AEnemyFactory::Tick(float DeltaTime)
 
 void AEnemyFactory::EnemySpawn()
 {
-	
-	
-	UE_LOG(LogTemp, Warning, TEXT("asdasd"));
 
 	GetWorld()->SpawnActor<AEnemy>(Enemy, GetActorLocation(), GetActorRotation());
 }

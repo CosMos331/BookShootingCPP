@@ -31,14 +31,28 @@ AEnemy::AEnemy()
 
 	// 메시 컴포넌트에 스태택 매시 지정
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> MESH(
-		TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+		TEXT("/Script/Engine.StaticMesh'/Game/Model/Drone_low.Drone_low'"));
 	if (MESH.Succeeded())
 	{
 		MeshComp->SetStaticMesh(MESH.Object);
 	}
+	MeshComp->SetWorldScale3D(FVector(5, 5, 5));
+
 
 	// 멤버 초기화
 	Speed = 800.f;
+
+	// Collision Setting
+	BoxComp->SetCollisionProfileName(TEXT("Enemy"));
+
+	/*BoxComp->SetGenerateOverlapEvents(true);
+	BoxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	BoxComp->SetCollisionObjectType(ECC_GameTraceChannel2);
+
+	BoxComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	BoxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel1, ECollisionResponse::ECR_Block);
+	BoxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel3, ECollisionResponse::ECR_Block);*/
 }
 
 // Called when the game starts or when spawned

@@ -6,6 +6,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "Materials/Material.h"
 
+#include "Actor/Enemy.h"
+
+#include "Kismet/GameplayStatics.h"
+#include "GmaeMode/MainGameModeBase.h"
 
 // Sets default values
 ABullet::ABullet()
@@ -49,7 +53,19 @@ ABullet::ABullet()
 	}
 	meshComp->SetMaterial(0, Material);
 
+	// collision setting
 
+	boxComp->SetCollisionProfileName(TEXT("Bullet"));
+
+	/*boxComp->SetGenerateOverlapEvents(true);
+	boxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	boxComp->SetCollisionObjectType(ECC_GameTraceChannel3);
+
+	boxComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+
+	boxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);*/
+
+	
 }
 
 // Called when the game starts or when spawned
@@ -57,6 +73,9 @@ void ABullet::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	boxComp->OnComponentBeginOverlap.AddUniqueDynamic(
+		this, &ThisClass::OnBulletOverlap);	
+
 }
 
 // Called every frame
@@ -67,6 +86,32 @@ void ABullet::Tick(float DeltaTime)
 	BulletMove(DeltaTime);
 
 	BulletRemove();
+}
+
+void ABullet::OnBulletOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+	AEnemy* e = Cast<AEnemy>(OtherActor);
+
+	// 충돌한 Actor가 Enemy이면 삭제
+	if (e != nullptr)
+	{
+		
+		AMainGameModeBase* gameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+
+		int32 Score = gameMode->GetScore();
+
+		Score++;
+		gameMode->SetScore(Score);
+
+
+		gameMode->SetScoreText();
+
+		OtherActor->Destroy();
+	}
+
+	// 총알을 자체 충돌시 삭제
+	Destroy();
 }
 
 void ABullet::BulletMove(float dt)

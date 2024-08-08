@@ -7,6 +7,9 @@
 #include "InputActionValue.h"
 #include "ShooterPlayer.generated.h"
 
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FShooting);
+
 UCLASS()
 class BOOKCPP_API AShooterPlayer : public APawn
 {
@@ -17,6 +20,7 @@ private:
 	float Speed;
 
 	FVector MoveDirection;
+
 public :
 	UPROPERTY(EditAnywhere)
 	class UBoxComponent* boxComp;
@@ -44,6 +48,8 @@ public :
 
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	class USoundWave* attackSound;
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundWave* DeathSound;
 
 public:
 	// Sets default values for this pawn's properties
@@ -67,5 +73,18 @@ private :
 
 
 	void Move(float dt);
-	
+
+
+public :
+	UPROPERTY(BlueprintAssignable)
+	FShooting OnShootings;
+
+	UFUNCTION()
+	void OnPalyerBeginOverlap(
+		UPrimitiveComponent* OverlappedComponent, 
+		AActor* OtherActor, 
+		UPrimitiveComponent* OtherComp, 
+		int32 OtherBodyIndex, 
+		bool bFromSweep, 
+		const FHitResult& SweepResult);
 };

@@ -13,8 +13,10 @@
 #include "Sound/SoundWave.h"
 
 #include "Kismet/GameplayStatics.h"
+#include "GmaeMode/MainGameModeBase.h"
 
 #include "Actor/Bullet.h"
+#include "Actor/Enemy.h"
 
 
 // Sets default values
@@ -39,10 +41,13 @@ AShooterPlayer::AShooterPlayer()
 	meshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MY_MESH_COMP"));
 	// meshComp를 boxComp의 자식으로 지정
 	meshComp->SetupAttachment(boxComp);
+	meshComp->SetWorldScale3D(FVector(5, 5, 5));
+	meshComp->SetWorldRotation(FRotator(0, 90, 90));
 
-	// 스테팃 메시컴포넌트의 StaticMesh 지정, 경로에 인는 메시를 지정
+
+	// 스테팃 메시컴포넌트의 StaticMesh 지정, 경로에 있는 메시를 지정
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_BOX(
-		TEXT("/Script/Engine.StaticMesh'/Engine/BasicShapes/Cube.Cube'"));
+		TEXT("/Script/Engine.StaticMesh'/Game/Model2/Spaceship_ARA.Spaceship_ARA'"));
 	if (SM_BOX.Succeeded())
 	{
 		meshComp->SetStaticMesh(SM_BOX.Object);
@@ -93,11 +98,35 @@ AShooterPlayer::AShooterPlayer()
 		attackSound = SOUND_ATT.Object;
 	}
 	attackSound->Volume = 0.2f;
-	
+
+	static ConstructorHelpers::FObjectFinder<USoundWave> SOUND_DEATH(
+		TEXT("/Script/Engine.SoundWave'/Game/Audio/Remove.Remove'"));
+	if (SOUND_DEATH.Succeeded())
+	{
+		DeathSound = SOUND_DEATH.Object;
+	}
+	DeathSound->Volume = 0.5f;
 
 	// 액터 초기화
 	Speed = 100;
 	MoveDirection = FVector::ZeroVector;
+
+	// Collision
+	boxComp->SetCollisionProfileName(TEXT("Player"));
+	
+	//// 오버랩 이벤트를 켠다.
+	//boxComp->SetGenerateOverlapEvents(true);
+	//// 충돌 응답을 Query And Physics로 설정한다.
+	//boxComp->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	//// Object Type을 1번 채널(Player)로 설정
+	//boxComp->SetCollisionObjectType(ECC_GameTraceChannel1);
+
+	//boxComp->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+	//// 지정한 채널의 Collision과의 충돌 처리 지정
+	//boxComp->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECollisionResponse::ECR_Overlap);
+
+
+
 }
 
 // Called when the game starts or when spawned
@@ -123,7 +152,11 @@ void AShooterPlayer::BeginPlay()
 	}
 
 
+	boxComp->OnComponentBeginOverlap.AddUniqueDynamic(
+		this, &ThisClass::OnPalyerBeginOverlap);
+
 }
+
 
 // Called every frame
 void AShooterPlayer::Tick(float DeltaTime)
@@ -153,7 +186,6 @@ void AShooterPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		enhancedInputComponent->BindAction(ia_Fire, ETriggerEvent::Started, this, &AShooterPlayer::OnFire);
 	}
 
-
 }
 
 void AShooterPlayer::OnHorizontal(const FInputActionValue& value)
@@ -173,10 +205,15 @@ void AShooterPlayer::OnVertical(const FInputActionValue& value)
 
 void AShooterPlayer::OnFire()
 {
+	// 이벤트
+	OnShootings.Broadcast();
+
+
 	GetWorld()->SpawnActor<ABullet>(
 		bulletFactory,
 		arrowComp->GetComponentLocation(),
 		arrowComp->GetComponentRotation());
+
 	UGameplayStatics::PlaySound2D(GetWorld(), attackSound);
 }
 
@@ -187,6 +224,33 @@ void AShooterPlayer::Move(float dt)
 	currentLocation.Z += MoveDirection.Z * Speed * dt;
 	currentLocation.Y += MoveDirection.Y * Speed * dt;
 	SetActorLocation(currentLocation);
+}
+
+void AShooterPlayer::OnPalyerBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	AEnemy* e = Cast<AEnemy>(OtherActor);
+
+	AMainGameModeBase* gameMode = Cast<AMainGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
+	int32 hp = gameMode->GetHp();
+
+	
+
+	if (e != nullptr)
+	{
+		e->Destroy();
+		hp--;
+		if (hp <= 0)
+		{
+
+			UGameplayStatics::PlaySound2D(GetWorld(), DeathSound);
+			gameMode->ShowWidget();
+			Destroy();
+		}
+	}
+	gameMode->SetHp(hp);
+
+
+
 }
 
 

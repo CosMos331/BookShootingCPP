@@ -10,7 +10,7 @@ public class BookCPP : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { 
 			"Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", 
-			"EnhancedInput"});
+			"EnhancedInput","UMG"});
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
